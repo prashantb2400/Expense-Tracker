@@ -37,6 +37,9 @@ import {
   QrCode,
   FileText,
   Landmark,
+  Store,
+  Receipt,
+  Check,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type {
@@ -44,6 +47,7 @@ import type {
   ExpenseCategory,
   PaymentMode,
   RecurringBill,
+  BillType,
 } from '../../types';
 import { CATEGORY_LABELS, PAYMENT_MODE_LABELS } from '../../types';
 import {
@@ -56,6 +60,7 @@ import {
   getDaysUntil,
   getCurrentMonth,
   CATEGORY_COLORS,
+  generateId,
 } from '../../utils/formatters';
 
 // ---- Helpers ----
@@ -247,6 +252,314 @@ function TopUpModal({ target, onClose }: TopUpModalProps) {
   );
 }
 
+// ---- Quick Add Expense Modal for Dashboard ----
+interface QuickExpenseModalProps {
+  onClose: () => void;
+}
+
+function QuickExpenseModal({ onClose }: QuickExpenseModalProps) {
+  const { state, dispatch } = useStore();
+  const [title, setTitle] = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState<ExpenseCategory>('petty_cash');
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>('cash');
+  const [vendorName, setVendorName] = useState('');
+  const [billType, setBillType] = useState<BillType>('kaccha');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
+  const [isAdvance, setIsAdvance] = useState(false);
+  const [selectedFamilyId, setSelectedFamilyId] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsedAmount = parseFloat(amount);
+    if (!title.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return;
+
+    const nowIso = new Date().toISOString();
+    const newExpense: Expense = {
+      id: generateId(),
+      date: nowIso,
+      title: title.trim(),
+      amount: parsedAmount,
+      category: selectedFamilyId ? 'family_withdrawal' : category,
+      paymentMode,
+      paidBy: selectedFamilyId ? 'family_member' : 'shop_galla',
+      familyMemberId: selectedFamilyId || undefined,
+      employeeId: selectedEmployeeId || undefined,
+      isAdvance: isAdvance && !!selectedEmployeeId,
+      vendorName: vendorName.trim() || undefined,
+      billType,
+      paymentStatus: 'paid',
+      createdAt: nowIso,
+    };
+
+    dispatch({ type: 'ADD_EXPENSE', payload: newExpense });
+    onClose();
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.94, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.94, opacity: 0 }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-[#E6E2DD] dark:border-[#2a2a2a] shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E6E2DD] dark:border-[#2a2a2a]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#0F3D3E]/10 dark:bg-[#D4AF37]/20 text-[#0F3D3E] dark:text-[#D4AF37] flex items-center justify-center">
+              <Plus size={18} className="stroke-[2.5]" />
+            </div>
+            <div>
+              <h3 className="font-serif text-lg font-bold text-[#0F3D3E] dark:text-[#D4AF37]">
+                Add Shop Expense
+              </h3>
+              <p className="text-xs text-stone-500 dark:text-stone-400">
+                Instantly logs expense and auto-deducts live balance
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-[#2a2a2a] text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 uppercase mb-1.5">
+              Title / Particulars <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              autoFocus
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Daily Chai & Samosa, Shop Electricity, Detergent Stock"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-[#FAF8F5] dark:bg-[#111] text-stone-800 dark:text-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F3D3E]"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 uppercase mb-1.5">
+                Amount (₹) <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  step="1"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0"
+                  className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-[#FAF8F5] dark:bg-[#111] text-stone-800 dark:text-stone-200 font-serif text-lg font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#0F3D3E]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 uppercase mb-1.5">
+                Category
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as ExpenseCategory)}
+                className="w-full px-3 py-2.5 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-[#FAF8F5] dark:bg-[#111] text-stone-800 dark:text-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F3D3E]"
+              >
+                {Object.entries(CATEGORY_LABELS).map(([catKey, catLabel]) => (
+                  <option key={catKey} value={catKey}>
+                    {catLabel}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 uppercase mb-1.5">
+              Payment Source & Mode
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { key: 'cash', label: 'Cash (Galla)', icon: Banknote },
+                { key: 'upi', label: 'UPI / QR', icon: Smartphone },
+                { key: 'bank_transfer', label: 'NetBanking', icon: Landmark },
+                { key: 'cheque', label: 'Cheque', icon: CreditCard },
+              ].map((m) => {
+                const Icon = m.icon;
+                const isSelected = paymentMode === m.key;
+                return (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={() => setPaymentMode(m.key as PaymentMode)}
+                    className={`flex flex-col items-center justify-center py-2 px-2 rounded-xl border text-xs font-medium transition-all ${
+                      isSelected
+                        ? 'border-[#0F3D3E] dark:border-[#D4AF37] bg-[#0F3D3E]/10 dark:bg-[#D4AF37]/20 text-[#0F3D3E] dark:text-[#D4AF37] font-bold shadow-xs'
+                        : 'border-[#E6E2DD] dark:border-[#2a2a2a] text-stone-500 hover:bg-stone-50 dark:hover:bg-[#222]'
+                    }`}
+                  >
+                    <Icon size={16} className="mb-1" />
+                    <span>{m.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-1.5">
+              {paymentMode === 'cash'
+                ? `⚡ Deducts from Cash Galla (Current: ${formatINR(state.shopProfile.gallaBalance)})`
+                : `⚡ Deducts from Bank Balance (Current: ${formatINR(state.shopProfile.bankBalance)})`}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 uppercase mb-1.5">
+                Vendor / Party (Optional)
+              </label>
+              <input
+                type="text"
+                value={vendorName}
+                onChange={(e) => setVendorName(e.target.value)}
+                placeholder="e.g. Parle, Hindustan Unilever"
+                className="w-full px-3.5 py-2 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-[#FAF8F5] dark:bg-[#111] text-stone-800 dark:text-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0F3D3E]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-stone-600 dark:text-stone-300 uppercase mb-1.5">
+                Bill Type
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBillType('kaccha')}
+                  className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${
+                    billType === 'kaccha'
+                      ? 'border-[#D97706] bg-[#D97706]/10 text-[#D97706]'
+                      : 'border-[#E6E2DD] dark:border-[#2a2a2a] text-stone-500'
+                  }`}
+                >
+                  Kaccha Slip
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillType('pakka')}
+                  className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${
+                    billType === 'pakka'
+                      ? 'border-[#2D6A4F] bg-[#2D6A4F]/10 text-[#2D6A4F] dark:text-emerald-400'
+                      : 'border-[#E6E2DD] dark:border-[#2a2a2a] text-stone-500'
+                  }`}
+                >
+                  Pakka (GST)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {(state.employees.length > 0 || state.familyMembers.length > 0) && (
+            <div className="p-3 rounded-xl bg-stone-50 dark:bg-[#18181a] border border-[#E6E2DD] dark:border-[#2a2a2a] space-y-2.5">
+              <span className="text-[11px] font-bold text-stone-500 uppercase tracking-wider block">
+                Optional: Tag to Staff or Family
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {state.employees.length > 0 && (
+                  <div>
+                    <label className="block text-[11px] text-stone-500 mb-1">Tag Employee</label>
+                    <select
+                      value={selectedEmployeeId}
+                      onChange={(e) => {
+                        setSelectedEmployeeId(e.target.value);
+                        if (e.target.value) setSelectedFamilyId('');
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#E6E2DD] dark:border-[#2a2a2a] bg-white dark:bg-[#111] text-xs text-stone-800 dark:text-stone-200"
+                    >
+                      <option value="">None (General Shop)</option>
+                      {state.employees.map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.name} ({emp.role})
+                        </option>
+                      ))}
+                    </select>
+                    {selectedEmployeeId && (
+                      <label className="flex items-center gap-1.5 mt-1.5 text-xs text-stone-600 dark:text-stone-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isAdvance}
+                          onChange={(e) => setIsAdvance(e.target.checked)}
+                          className="rounded text-[#0F3D3E]"
+                        />
+                        <span>Mark as Mid-Month Advance (Upaad)</span>
+                      </label>
+                    )}
+                  </div>
+                )}
+
+                {state.familyMembers.length > 0 && (
+                  <div>
+                    <label className="block text-[11px] text-stone-500 mb-1">Tag Family Member</label>
+                    <select
+                      value={selectedFamilyId}
+                      onChange={(e) => {
+                        setSelectedFamilyId(e.target.value);
+                        if (e.target.value) setSelectedEmployeeId('');
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#E6E2DD] dark:border-[#2a2a2a] bg-white dark:bg-[#111] text-xs text-stone-800 dark:text-stone-200"
+                    >
+                      <option value="">None</option>
+                      {state.familyMembers.map((fm) => (
+                        <option key={fm.id} value={fm.id}>
+                          {fm.name} ({fm.relation})
+                        </option>
+                      ))}
+                    </select>
+                    {selectedFamilyId && (
+                      <span className="text-[10px] text-[#D4AF37] block mt-1">
+                        Deducts from personal monthly allowance
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#E6E2DD] dark:border-[#2a2a2a]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-stone-500 hover:text-stone-800 dark:hover:text-stone-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!title.trim() || !amount || parseFloat(amount) <= 0}
+              className="px-5 py-2.5 rounded-xl bg-[#0F3D3E] dark:bg-[#1B4332] hover:bg-[#0A2A2B] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+            >
+              <Plus size={14} className="stroke-[2.5]" />
+              <span>Record Expense & Deduct</span>
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ============================================================
 // Main Dashboard Component
 // ============================================================
@@ -257,6 +570,7 @@ export default function Dashboard() {
   const [trendRange, setTrendRange] = useState<'7d' | '30d'>('30d');
   const [activityFilter, setActivityFilter] = useState<'all' | 'today' | 'week'>('all');
   const [topUpTarget, setTopUpTarget] = useState<'galla' | 'bank' | null>(null);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
 
   // ============================================================
   // Derived data computations (all memoised)
@@ -432,6 +746,73 @@ export default function Dashboard() {
   // ============================================================
   return (
     <div className="space-y-6 pb-8">
+      {/* ================================================================ */}
+      {/* SECTION 0: Top Command Header with Quick Actions                 */}
+      {/* ================================================================ */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E6E2DD] dark:border-[#2a2a2a]">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#1a1a1a] dark:text-[#f3efe9]">
+              {state.shopProfile.shopName || 'Bahi-Khata'}
+            </h1>
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0F3D3E]/10 dark:bg-[#D4AF37]/20 text-[#0F3D3E] dark:text-[#D4AF37] border border-[#0F3D3E]/20 dark:border-[#D4AF37]/30">
+              <Store size={12} /> Executive Command Center
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-[#8A8780] dark:text-[#9A9892] mt-1 flex items-center gap-2 flex-wrap">
+            <span>
+              {new Date().toLocaleDateString('en-IN', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </span>
+            <span>•</span>
+            <span>
+              Cash Drawer (Galla):{' '}
+              <strong className="text-[#1a1a1a] dark:text-[#f3efe9] tabular-nums">
+                {formatINR(gallaBalance)}
+              </strong>
+            </span>
+            <span>•</span>
+            <span>
+              Bank/UPI:{' '}
+              <strong className="text-[#1a1a1a] dark:text-[#f3efe9] tabular-nums">
+                {formatINR(bankBalance)}
+              </strong>
+            </span>
+          </p>
+        </div>
+
+        {/* Primary Action Button Suite */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            onClick={() => setIsAddExpenseOpen(true)}
+            className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-[#0F3D3E] dark:bg-[#1B4332] text-white hover:bg-[#0A2A2B] dark:hover:bg-[#143226] font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+          >
+            <Plus size={16} className="stroke-[2.5]" />
+            <span>Add New Expense</span>
+            <kbd className="hidden sm:inline-block ml-1 px-1.5 py-0.5 text-[10px] uppercase font-mono rounded bg-white/20 text-white/90">
+              N
+            </kbd>
+          </button>
+          <button
+            onClick={() => setTopUpTarget('galla')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] text-xs font-semibold text-[#1a1a1a] dark:text-[#f3efe9] hover:bg-[#FAF8F5] dark:hover:bg-[#222] transition-colors shadow-xs"
+          >
+            <Banknote size={14} className="text-[#0F3D3E] dark:text-[#D4AF37]" />
+            <span>+ Cash in Galla</span>
+          </button>
+          <button
+            onClick={() => setTopUpTarget('bank')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] text-xs font-semibold text-[#1a1a1a] dark:text-[#f3efe9] hover:bg-[#FAF8F5] dark:hover:bg-[#222] transition-colors shadow-xs"
+          >
+            <Building2 size={14} className="text-[#2563EB]" />
+            <span>+ Add to Bank</span>
+          </button>
+        </div>
+      </div>
       {/* ================================================================ */}
       {/* SECTION 1: Top KPI Bento Grid                                    */}
       {/* ================================================================ */}
@@ -849,10 +1230,19 @@ export default function Dashboard() {
           variants={cardVariants}
           className="lg:col-span-2 bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-2xl p-5 shadow-sm"
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-serif text-sm font-semibold text-stone-800 dark:text-stone-200">
-              Recent Activity
-            </h3>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <h3 className="font-serif text-sm font-semibold text-stone-800 dark:text-stone-200">
+                Recent Activity
+              </h3>
+              <button
+                onClick={() => setIsAddExpenseOpen(true)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#0F3D3E]/10 dark:bg-[#D4AF37]/20 text-[#0F3D3E] dark:text-[#D4AF37] text-xs font-semibold hover:bg-[#0F3D3E]/20 transition-colors"
+              >
+                <Plus size={13} className="stroke-[2.5]" />
+                <span>Add Expense</span>
+              </button>
+            </div>
             {/* Filter pills */}
             <div className="flex gap-1 bg-[#F3EFEA] dark:bg-[#222] rounded-lg p-0.5">
               {([
@@ -1003,7 +1393,7 @@ export default function Dashboard() {
       </motion.div>
 
       {/* ================================================================ */}
-      {/* SECTION 4: Quick Top-Up Buttons                                  */}
+      {/* SECTION 4: Quick Actions & Top-Up Buttons                         */}
       {/* ================================================================ */}
       <motion.div
         variants={containerVariants}
@@ -1013,18 +1403,29 @@ export default function Dashboard() {
       >
         <motion.button
           variants={cardVariants}
-          onClick={() => setTopUpTarget('galla')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F3D3E] hover:bg-[#1B4332] text-white text-sm font-medium transition-colors shadow-sm"
+          onClick={() => setIsAddExpenseOpen(true)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F3D3E] dark:bg-[#1B4332] hover:bg-[#0A2A2B] dark:hover:bg-[#143226] text-white text-sm font-semibold transition-all shadow-md active:scale-[0.98]"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          Record New Expense
+          <kbd className="ml-1 px-1.5 py-0.5 text-[10px] uppercase font-mono rounded bg-white/20 text-white/90">
+            N
+          </kbd>
+        </motion.button>
+        <motion.button
+          variants={cardVariants}
+          onClick={() => setTopUpTarget('galla')}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] text-stone-700 dark:text-stone-300 text-sm font-medium hover:bg-[#F3EFEA] dark:hover:bg-[#222] transition-colors shadow-sm"
+        >
+          <Banknote className="w-4 h-4 text-[#0F3D3E] dark:text-[#D4AF37]" />
           Add Cash to Galla
         </motion.button>
         <motion.button
           variants={cardVariants}
           onClick={() => setTopUpTarget('bank')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] text-stone-700 dark:text-stone-300 text-sm font-medium hover:bg-[#F3EFEA] dark:hover:bg-[#222] transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] text-stone-700 dark:text-stone-300 text-sm font-medium hover:bg-[#F3EFEA] dark:hover:bg-[#222] transition-colors shadow-sm"
         >
-          <Building2 className="w-4 h-4" />
+          <Building2 className="w-4 h-4 text-[#2563EB]" />
           Add to Bank
         </motion.button>
       </motion.div>
@@ -1032,6 +1433,11 @@ export default function Dashboard() {
       {/* ---- Top-Up Modal ---- */}
       {topUpTarget !== null && (
         <TopUpModal target={topUpTarget} onClose={() => setTopUpTarget(null)} />
+      )}
+
+      {/* ---- Quick Add Expense Modal ---- */}
+      {isAddExpenseOpen && (
+        <QuickExpenseModal onClose={() => setIsAddExpenseOpen(false)} />
       )}
     </div>
   );
