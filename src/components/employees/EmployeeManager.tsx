@@ -1025,7 +1025,7 @@ function SettleSalaryModal({
     const now = new Date().toISOString();
     const currentMonth = getCurrentMonth();
 
-    // 1. Create settlement record
+    // 1. Create settlement record (store reducer automatically records payout advance and expense)
     const settlementRecord: MonthlySettlement = {
       employeeId: employee.id,
       month: currentMonth,
@@ -1039,40 +1039,6 @@ function SettleSalaryModal({
     };
 
     dispatch({ type: 'SETTLE_MONTHLY_SALARY', payload: settlementRecord });
-
-    // 2. Record the net payable as a salary_payout advance
-    if (netPayable > 0) {
-      const salaryPayout: EmployeeAdvance = {
-        id: generateId(),
-        employeeId: employee.id,
-        date: now,
-        amount: netPayable,
-        type: 'salary_payout',
-        description: `Salary settlement for ${getMonthLabel(currentMonth)}`,
-        paymentMode: settlePaymentMode,
-        month: currentMonth,
-      };
-      dispatch({ type: 'ADD_EMPLOYEE_ADVANCE', payload: salaryPayout });
-    }
-
-    // 3. Log to main expense ledger
-    const expenseEntry: Expense = {
-      id: generateId(),
-      date: now,
-      title: `Salary: ${employee.name} — ${getMonthLabel(currentMonth)}`,
-      description: `Monthly salary settlement. Base: ${formatINR(baseSalary)}, Advances: ${formatINR(totalAdvances)}, Bonuses: ${formatINR(totalBonuses)}, Deductions: ${formatINR(totalDeductions)}`,
-      category: 'staff_payroll',
-      amount: Math.max(netPayable, 0),
-      paymentMode: settlePaymentMode,
-      paidBy: 'shop_galla',
-      billType: 'kaccha',
-      paymentStatus: 'paid',
-      employeeId: employee.id,
-      createdAt: now,
-    };
-
-    dispatch({ type: 'ADD_EXPENSE', payload: expenseEntry });
-
     onClose();
   };
 

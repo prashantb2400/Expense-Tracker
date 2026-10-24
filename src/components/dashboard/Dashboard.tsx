@@ -627,12 +627,22 @@ export default function Dashboard() {
         .filter(
           (a) =>
             a.month === currentMonth &&
-            (a.type === 'advance' || a.type === 'tea_food' || a.type === 'salary_payout')
+            (a.type === 'advance' || a.type === 'tea_food')
         )
         .reduce((s, a) => s + a.amount, 0),
     [state.employeeAdvances, currentMonth]
   );
-  const remainingPayable = Math.max(0, totalBaseSalaries - totalAdvancesThisMonth);
+  const totalSettledSalaryThisMonth = useMemo(
+    () =>
+      state.employeeAdvances
+        .filter((a) => a.month === currentMonth && a.type === 'salary_payout')
+        .reduce((s, a) => s + a.amount, 0),
+    [state.employeeAdvances, currentMonth]
+  );
+  const remainingPayable = Math.max(
+    0,
+    totalBaseSalaries - totalAdvancesThisMonth - totalSettledSalaryThisMonth
+  );
 
   // Pending vendor dues
   const pendingExpenses = useMemo(
@@ -939,8 +949,13 @@ export default function Dashboard() {
               Adv: {formatINR(totalAdvancesThisMonth)}
             </span>
           </div>
-          <div className="mt-2 text-xs text-stone-400 dark:text-stone-500">
-            {activeEmployees.length} active staff
+          <div className="mt-2 flex items-center justify-between text-[11px] text-stone-400 dark:text-stone-500">
+            <span>{activeEmployees.length} active staff</span>
+            {totalSettledSalaryThisMonth > 0 && (
+              <span className="text-[#2D6A4F] dark:text-emerald-400 font-medium">
+                Paid: {formatINR(totalSettledSalaryThisMonth)}
+              </span>
+            )}
           </div>
         </motion.div>
 

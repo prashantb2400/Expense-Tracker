@@ -335,7 +335,6 @@ export default function FamilyManager() {
     const nowIso = new Date().toISOString();
 
     if (txData.type === 'withdrawal') {
-      // 1. Add family transaction
       const ft: FamilyTransaction = {
         id: generateId(),
         familyMemberId: selectedMember.id,
@@ -346,22 +345,6 @@ export default function FamilyManager() {
         month: currentM,
       };
       dispatch({ type: 'ADD_FAMILY_TRANSACTION', payload: ft });
-
-      // 2. Also log as Expense with category 'family_withdrawal' to auto-deduct shop balance
-      const exp: Expense = {
-        id: generateId(),
-        date: nowIso,
-        title: `Family Draw: ${selectedMember.name} (${txData.description || 'Personal'})`,
-        category: 'family_withdrawal',
-        amount,
-        paymentMode: txData.paymentMode,
-        paidBy: 'shop_galla',
-        familyMemberId: selectedMember.id,
-        billType: 'kaccha',
-        paymentStatus: 'paid',
-        createdAt: nowIso,
-      };
-      dispatch({ type: 'ADD_EXPENSE', payload: exp });
     } else {
       // Member paid from pocket for shop work -> Shop owes member
       const ft: FamilyTransaction = {
@@ -390,7 +373,7 @@ export default function FamilyManager() {
     const nowIso = new Date().toISOString();
     const currentM = getCurrentMonth();
 
-    // 1. Add reimburse transaction
+    // Add reimburse transaction (store reducer handles expense synchronization & balance deduction)
     const ft: FamilyTransaction = {
       id: generateId(),
       familyMemberId: selectedMember.id,
@@ -401,22 +384,6 @@ export default function FamilyManager() {
       month: currentM,
     };
     dispatch({ type: 'ADD_FAMILY_TRANSACTION', payload: ft });
-
-    // 2. Log expense to deduct cash/bank
-    const exp: Expense = {
-      id: generateId(),
-      date: nowIso,
-      title: `Reimbursement Paid: ${selectedMember.name}`,
-      category: 'reimbursement',
-      amount: reimburseAmount,
-      paymentMode: 'cash',
-      paidBy: 'shop_galla',
-      familyMemberId: selectedMember.id,
-      billType: 'kaccha',
-      paymentStatus: 'paid',
-      createdAt: nowIso,
-    };
-    dispatch({ type: 'ADD_EXPENSE', payload: exp });
 
     setIsReimburseModalOpen(false);
   };

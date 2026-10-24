@@ -1,10 +1,10 @@
 // ============================================================
-// Bahi-Khata Modern — Global State Store (Context + Reducer)
+// Bahi-Khata Modern — Synchronized Global State Store
 // ============================================================
-import React, { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react';
-import type { AppState, AppAction, Expense } from '../types';
-import { createDemoState } from '../utils/seedData';
-import { generateId, getCurrentMonth } from '../utils/formatters';
+import React, { createContext, useContext, useReducer, useEffect, type ReactNode } from 'react';
+import type { AppState, AppAction, Expense, EmployeeAdvance, FamilyTransaction } from '../types';
+import { createDemoState, seedRecurringBills } from '../utils/seedData';
+import { generateId, getCurrentMonth, getMonthLabel, isThisMonth } from '../utils/formatters';
 
 const STORAGE_KEY = 'bahi-khata-state';
 
@@ -28,12 +28,148 @@ const defaultState: AppState = {
   activeTab: 'dashboard',
 };
 
+// ============================================================
+// Master Synchronization & Reconciliation Engine
+// Guarantees all balances, advances, family limits, and expenses
+// are 100% mathematically and relationally in sync at all times.
+// ============================================================
+export function reconcileStoreState(state: AppState): AppState {
+  const currentMonth = getCurrentMonth();
+
+  // 1. Determine Opening Balances
+  const openingGalla = Number(state.shopProfile.openingGallaBalance) || 0;
+  const openingBank = Number(state.shopProfile.openingBankBalance) || 0;
+
+  // 2. Compute exact live Galla & Bank balances from master transaction list
+  let gallaBalance = openingGalla;
+  let bankBalance = openingBank;
+
+  for (const exp of state.expenses) {
+    const amt = Number(exp.amount) || 0;
+    if (exp.isTopUp) {
+      if (exp.topUpTarget === 'galla') {
+        gallaBalance += amt;
+      } else {
+        bankBalance += amt;
+      }
+    } else if (exp.paymentStatus !== 'pending') {
+      if (exp.paymentMode === 'cash') {
+        gallaBalance -= amt;
+      } else {
+        bankBalance -= amt;
+      }
+    }
+  }
+
+  // 3. Reconcile Employee Advances from Expenses
+  // Any expense marked isAdvance or category staff_welfare / staff_payroll with employeeId
+  const employeeAdvances = [...state.employeeAdvances];
+  for (const exp of state.expenses) {
+    if (exp.employeeId && (exp.isAdvance || exp.category === 'staff_welfare')) {
+      const exists = employeeAdvances.some(
+        (a) =>
+          a.id === exp.id ||
+          (a.employeeId === exp.employeeId && a.date === exp.date && a.amount === exp.amount)
+      );
+      if (!exists) {
+        const d = new Date(exp.date);
+        const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        employeeAdvances.push({
+          id: exp.id,
+          employeeId: exp.employeeId,
+          date: exp.date,
+          amount: exp.amount,
+          type: exp.isAdvance ? 'advance' : 'tea_food',
+          description: exp.title,
+          paymentMode: exp.paymentMode,
+          month: m,
+        });
+      }
+    }
+  }
+
+  // 4. Reconcile Family Transactions & Live Wallet Balances
+  const familyTransactions = [...state.familyTransactions];
+  for (const exp of state.expenses) {
+    if (exp.familyMemberId && exp.category === 'family_withdrawal') {
+      const exists = familyTransactions.some(
+        (ft) =>
+          ft.id === exp.id ||
+          ft.expenseId === exp.id ||
+          (ft.familyMemberId === exp.familyMemberId && ft.date === exp.date && ft.amount === exp.amount)
+      );
+      if (!exists) {
+        const d = new Date(exp.date);
+        const m = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        familyTransactions.push({
+          id: exp.id,
+          familyMemberId: exp.familyMemberId,
+          date: exp.date,
+          amount: exp.amount,
+          type: 'withdrawal',
+          description: exp.title,
+          expenseId: exp.id,
+          month: m,
+        });
+      }
+    }
+  }
+
+  // Recalculate each family member's current wallet balance
+  const updatedFamilyMembers = state.familyMembers.map((fm) => {
+    const totalDrawnThisMonth = familyTransactions
+      .filter(
+        (t) =>
+          t.familyMemberId === fm.id &&
+          t.month === currentMonth &&
+          t.type === 'withdrawal'
+      )
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    return {
+      ...fm,
+      walletBalance: (fm.monthlyBudget || 0) - totalDrawnThisMonth,
+    };
+  });
+
+  // 5. Reconcile Recurring Bills Payment Status
+  const recurringBills = state.recurringBills.map((rb) => {
+    const isPaidInExpenses = state.expenses.some((e) => {
+      const titleMatch =
+        e.title.toLowerCase().includes(rb.title.toLowerCase()) ||
+        (rb.vendorName && e.vendorName?.toLowerCase().includes(rb.vendorName.toLowerCase()));
+      return titleMatch && isThisMonth(e.date) && e.paymentStatus === 'paid';
+    });
+
+    if (isPaidInExpenses && rb.status !== 'paid') {
+      return {
+        ...rb,
+        status: 'paid' as const,
+      };
+    }
+    return rb;
+  });
+
+  return {
+    ...state,
+    shopProfile: {
+      ...state.shopProfile,
+      gallaBalance,
+      bankBalance,
+    },
+    familyMembers: updatedFamilyMembers,
+    familyTransactions,
+    employeeAdvances,
+    recurringBills,
+  };
+}
+
 function loadState(): AppState {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
-      return { ...defaultState, ...parsed };
+      return reconcileStoreState({ ...defaultState, ...parsed });
     }
   } catch {
     // ignore
@@ -49,65 +185,35 @@ function saveState(state: AppState): void {
   }
 }
 
-function deductExpenseFromBalance(state: AppState, expense: Expense, reverse = false): AppState {
-  const multiplier = reverse ? -1 : 1;
-  const amount = expense.amount * multiplier;
-
-  if (expense.isTopUp) {
-    // Top-ups ADD to balance
-    if (expense.topUpTarget === 'galla') {
-      return {
-        ...state,
-        shopProfile: {
-          ...state.shopProfile,
-          gallaBalance: state.shopProfile.gallaBalance + amount,
-        },
-      };
-    } else {
-      return {
-        ...state,
-        shopProfile: {
-          ...state.shopProfile,
-          bankBalance: state.shopProfile.bankBalance + amount,
-        },
-      };
-    }
-  }
-
-  // Normal expenses DEDUCT from balance
-  if (expense.paymentMode === 'cash') {
-    return {
-      ...state,
-      shopProfile: {
-        ...state.shopProfile,
-        gallaBalance: state.shopProfile.gallaBalance - amount,
-      },
-    };
-  } else {
-    return {
-      ...state,
-      shopProfile: {
-        ...state.shopProfile,
-        bankBalance: state.shopProfile.bankBalance - amount,
-      },
-    };
-  }
-}
-
 function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'COMPLETE_SETUP': {
-      return {
+      const initialShop = action.payload.shopProfile;
+      const initialGalla = Number(initialShop.openingGallaBalance) || 0;
+      const initialBank = Number(initialShop.openingBankBalance) || 0;
+
+      return reconcileStoreState({
         ...state,
         isSetupComplete: true,
-        shopProfile: action.payload.shopProfile,
+        shopProfile: {
+          shopName: initialShop.shopName,
+          openingGallaBalance: initialGalla,
+          openingBankBalance: initialBank,
+          gallaBalance: initialGalla,
+          bankBalance: initialBank,
+        },
         employees: action.payload.employees,
         familyMembers: action.payload.familyMembers,
-      };
+        expenses: [],
+        employeeAdvances: [],
+        monthlySettlements: [],
+        familyTransactions: [],
+        recurringBills: state.recurringBills.length > 0 ? state.recurringBills : seedRecurringBills,
+      });
     }
 
     case 'LOAD_DEMO_DATA': {
-      return createDemoState();
+      return reconcileStoreState(createDemoState());
     }
 
     case 'RESET_APP': {
@@ -124,82 +230,42 @@ function reducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'ADD_EXPENSE': {
-      const newState = {
+      const exp = action.payload;
+      const newState: AppState = {
         ...state,
-        expenses: [action.payload, ...state.expenses],
+        expenses: [exp, ...state.expenses.filter((e) => e.id !== exp.id)],
       };
-      // Auto-deduct from balance
-      const deducted = deductExpenseFromBalance(newState, action.payload);
-
-      // If expense is tagged to a family member as a withdrawal, deduct from their wallet
-      if (action.payload.familyMemberId && action.payload.category === 'family_withdrawal') {
-        return {
-          ...deducted,
-          familyMembers: deducted.familyMembers.map(fm =>
-            fm.id === action.payload.familyMemberId
-              ? { ...fm, walletBalance: fm.walletBalance - action.payload.amount }
-              : fm
-          ),
-        };
-      }
-
-      // If expense is an employee advance, add to advances ledger
-      if (action.payload.isAdvance && action.payload.employeeId) {
-        const advance = {
-          id: generateId(),
-          employeeId: action.payload.employeeId,
-          date: action.payload.date,
-          amount: action.payload.amount,
-          type: 'advance' as const,
-          description: action.payload.title,
-          paymentMode: action.payload.paymentMode,
-          month: getCurrentMonth(),
-        };
-        return {
-          ...deducted,
-          employeeAdvances: [...deducted.employeeAdvances, advance],
-        };
-      }
-
-      return deducted;
+      return reconcileStoreState(newState);
     }
 
     case 'UPDATE_EXPENSE': {
-      const oldExpense = state.expenses.find(e => e.id === action.payload.id);
-      let newState = {
+      const exp = action.payload;
+      const newState: AppState = {
         ...state,
-        expenses: state.expenses.map(e => (e.id === action.payload.id ? action.payload : e)),
+        expenses: state.expenses.map((e) => (e.id === exp.id ? exp : e)),
+        employeeAdvances: state.employeeAdvances.map((a) =>
+          a.id === exp.id ? { ...a, amount: exp.amount, description: exp.title } : a
+        ),
+        familyTransactions: state.familyTransactions.map((ft) =>
+          ft.id === exp.id || ft.expenseId === exp.id
+            ? { ...ft, amount: exp.amount, description: exp.title }
+            : ft
+        ),
       };
-      // Reverse old deduction, apply new
-      if (oldExpense) {
-        newState = deductExpenseFromBalance(newState, oldExpense, true);
-      }
-      newState = deductExpenseFromBalance(newState, action.payload);
-      return newState;
+      return reconcileStoreState(newState);
     }
 
     case 'DELETE_EXPENSE': {
-      const expense = state.expenses.find(e => e.id === action.payload);
-      let newState = {
+      const id = action.payload;
+      const newState: AppState = {
         ...state,
-        expenses: state.expenses.filter(e => e.id !== action.payload),
+        expenses: state.expenses.filter((e) => e.id !== id),
+        employeeAdvances: state.employeeAdvances.filter((a) => a.id !== id),
+        familyTransactions: state.familyTransactions.filter(
+          (t) => t.id !== id && t.expenseId !== id
+        ),
       };
-      // Reverse deduction
-      if (expense) {
-        newState = deductExpenseFromBalance(newState, expense, true);
-        // Reverse family wallet deduction
-        if (expense.familyMemberId && expense.category === 'family_withdrawal') {
-          newState = {
-            ...newState,
-            familyMembers: newState.familyMembers.map(fm =>
-              fm.id === expense.familyMemberId
-                ? { ...fm, walletBalance: fm.walletBalance + expense.amount }
-                : fm
-            ),
-          };
-        }
-      }
-      return newState;
+      return reconcileStoreState(newState);
     }
 
     case 'ADD_EMPLOYEE': {
@@ -209,79 +275,135 @@ function reducer(state: AppState, action: AppAction): AppState {
     case 'UPDATE_EMPLOYEE': {
       return {
         ...state,
-        employees: state.employees.map(e => (e.id === action.payload.id ? action.payload : e)),
+        employees: state.employees.map((e) => (e.id === action.payload.id ? action.payload : e)),
       };
     }
 
     case 'DELETE_EMPLOYEE': {
-      return {
+      const empId = action.payload;
+      const newState: AppState = {
         ...state,
-        employees: state.employees.filter(e => e.id !== action.payload),
-        employeeAdvances: state.employeeAdvances.filter(a => a.employeeId !== action.payload),
+        employees: state.employees.filter((e) => e.id !== empId),
+        employeeAdvances: state.employeeAdvances.filter((a) => a.employeeId !== empId),
+        expenses: state.expenses.filter((e) => e.employeeId !== empId),
       };
+      return reconcileStoreState(newState);
     }
 
     case 'ADD_EMPLOYEE_ADVANCE': {
-      let newState = {
-        ...state,
-        employeeAdvances: [...state.employeeAdvances, action.payload],
+      const adv = action.payload;
+      const emp = state.employees.find((e) => e.id === adv.employeeId);
+      const isPayout = adv.type === 'salary_payout';
+
+      // Always create a corresponding Expense so Expense Ledger, Dashboard, and Balances stay 100% in sync
+      const linkedExpense: Expense = {
+        id: adv.id,
+        date: adv.date,
+        title: `${isPayout ? 'Salary Payout' : 'Staff Advance'}: ${emp?.name || 'Staff'} (${adv.description})`,
+        category: isPayout ? 'staff_payroll' : 'staff_welfare',
+        amount: adv.amount,
+        paymentMode: adv.paymentMode,
+        paidBy: 'shop_galla',
+        employeeId: adv.employeeId,
+        billType: 'kaccha',
+        paymentStatus: 'paid',
+        isAdvance: adv.type === 'advance',
+        notes: adv.description,
+        createdAt: adv.date,
       };
-      // Also deduct from galla/bank
-      if (action.payload.type === 'advance' || action.payload.type === 'tea_food' || action.payload.type === 'bonus') {
-        if (action.payload.paymentMode === 'cash') {
-          newState = {
-            ...newState,
-            shopProfile: {
-              ...newState.shopProfile,
-              gallaBalance: newState.shopProfile.gallaBalance - action.payload.amount,
-            },
-          };
-        } else {
-          newState = {
-            ...newState,
-            shopProfile: {
-              ...newState.shopProfile,
-              bankBalance: newState.shopProfile.bankBalance - action.payload.amount,
-            },
-          };
-        }
-      }
-      return newState;
+
+      const newState: AppState = {
+        ...state,
+        employeeAdvances: [adv, ...state.employeeAdvances.filter((a) => a.id !== adv.id)],
+        expenses: [linkedExpense, ...state.expenses.filter((e) => e.id !== adv.id)],
+      };
+      return reconcileStoreState(newState);
     }
 
     case 'DELETE_EMPLOYEE_ADVANCE': {
-      const adv = state.employeeAdvances.find(a => a.id === action.payload);
-      let newState = {
+      const id = action.payload;
+      const newState: AppState = {
         ...state,
-        employeeAdvances: state.employeeAdvances.filter(a => a.id !== action.payload),
+        employeeAdvances: state.employeeAdvances.filter((a) => a.id !== id),
+        expenses: state.expenses.filter((e) => e.id !== id),
       };
-      if (adv && (adv.type === 'advance' || adv.type === 'tea_food' || adv.type === 'bonus')) {
-        if (adv.paymentMode === 'cash') {
-          newState = {
-            ...newState,
-            shopProfile: {
-              ...newState.shopProfile,
-              gallaBalance: newState.shopProfile.gallaBalance + adv.amount,
-            },
-          };
-        } else {
-          newState = {
-            ...newState,
-            shopProfile: {
-              ...newState.shopProfile,
-              bankBalance: newState.shopProfile.bankBalance + adv.amount,
-            },
-          };
-        }
-      }
-      return newState;
+      return reconcileStoreState(newState);
     }
 
     case 'SETTLE_MONTHLY_SALARY': {
-      return {
+      const settlement = action.payload;
+      const emp = state.employees.find((e) => e.id === settlement.employeeId);
+      const nowIso = settlement.settledAt || new Date().toISOString();
+      const currentMonth = settlement.month || getCurrentMonth();
+
+      let newAdvances = [
+        ...state.employeeAdvances.filter(
+          (a) =>
+            !(
+              a.employeeId === settlement.employeeId &&
+              a.month === currentMonth &&
+              a.type === 'salary_payout'
+            )
+        ),
+      ];
+
+      let newExpenses = [
+        ...state.expenses.filter(
+          (e) =>
+            !(
+              e.employeeId === settlement.employeeId &&
+              e.category === 'staff_payroll' &&
+              isThisMonth(e.date)
+            )
+        ),
+      ];
+
+      if (settlement.netPaid > 0) {
+        const payoutId = `settle-${settlement.employeeId}-${currentMonth}`;
+
+        // 1. Advance passbook record
+        const payoutAdvance: EmployeeAdvance = {
+          id: payoutId,
+          employeeId: settlement.employeeId,
+          date: nowIso,
+          amount: settlement.netPaid,
+          type: 'salary_payout',
+          description: `Salary settlement for ${getMonthLabel(currentMonth)}`,
+          paymentMode: 'cash',
+          month: currentMonth,
+        };
+        newAdvances = [payoutAdvance, ...newAdvances];
+
+        // 2. Master expense ledger entry
+        const payoutExpense: Expense = {
+          id: payoutId,
+          date: nowIso,
+          title: `Salary Settlement: ${emp?.name || 'Staff'} (${getMonthLabel(currentMonth)})`,
+          category: 'staff_payroll',
+          amount: settlement.netPaid,
+          paymentMode: 'cash',
+          paidBy: 'shop_galla',
+          employeeId: settlement.employeeId,
+          billType: 'kaccha',
+          paymentStatus: 'paid',
+          notes: `Net salary paid after adjusting advances (${settlement.totalAdvances}) and deductions (${settlement.totalDeductions})`,
+          createdAt: nowIso,
+        };
+        newExpenses = [payoutExpense, ...newExpenses];
+      }
+
+      const newState: AppState = {
         ...state,
-        monthlySettlements: [...state.monthlySettlements, action.payload],
+        monthlySettlements: [
+          settlement,
+          ...state.monthlySettlements.filter(
+            (s) => !(s.employeeId === settlement.employeeId && s.month === currentMonth)
+          ),
+        ],
+        employeeAdvances: newAdvances,
+        expenses: newExpenses,
       };
+      return reconcileStoreState(newState);
     }
 
     case 'ADD_FAMILY_MEMBER': {
@@ -291,37 +413,67 @@ function reducer(state: AppState, action: AppAction): AppState {
     case 'UPDATE_FAMILY_MEMBER': {
       return {
         ...state,
-        familyMembers: state.familyMembers.map(fm =>
+        familyMembers: state.familyMembers.map((fm) =>
           fm.id === action.payload.id ? action.payload : fm
         ),
       };
     }
 
     case 'DELETE_FAMILY_MEMBER': {
-      return {
+      const famId = action.payload;
+      const newState: AppState = {
         ...state,
-        familyMembers: state.familyMembers.filter(fm => fm.id !== action.payload),
-        familyTransactions: state.familyTransactions.filter(ft => ft.familyMemberId !== action.payload),
+        familyMembers: state.familyMembers.filter((fm) => fm.id !== famId),
+        familyTransactions: state.familyTransactions.filter((ft) => ft.familyMemberId !== famId),
+        expenses: state.expenses.filter((e) => e.familyMemberId !== famId),
       };
+      return reconcileStoreState(newState);
     }
 
     case 'ADD_FAMILY_TRANSACTION': {
-      let newState = {
-        ...state,
-        familyTransactions: [...state.familyTransactions, action.payload],
-      };
-      // Auto-deduct from family member wallet if withdrawal
-      if (action.payload.type === 'withdrawal') {
-        newState = {
-          ...newState,
-          familyMembers: newState.familyMembers.map(fm =>
-            fm.id === action.payload.familyMemberId
-              ? { ...fm, walletBalance: fm.walletBalance - action.payload.amount }
-              : fm
-          ),
+      const ft = action.payload;
+      const fm = state.familyMembers.find((m) => m.id === ft.familyMemberId);
+      let newExpenses = [...state.expenses];
+
+      // If money leaves shop (withdrawal or reimbursement payout), sync to expenses
+      if (ft.type === 'withdrawal') {
+        const exp: Expense = {
+          id: ft.id,
+          date: ft.date,
+          title: `Family Draw: ${fm?.name || 'Family'} (${ft.description})`,
+          category: 'family_withdrawal',
+          amount: ft.amount,
+          paymentMode: 'cash',
+          paidBy: 'shop_galla',
+          familyMemberId: ft.familyMemberId,
+          billType: 'kaccha',
+          paymentStatus: 'paid',
+          createdAt: ft.date,
         };
+        newExpenses = [exp, ...newExpenses.filter((e) => e.id !== ft.id)];
+      } else if (ft.type === 'reimburse') {
+        const exp: Expense = {
+          id: ft.id,
+          date: ft.date,
+          title: `Reimbursement Paid: ${fm?.name || 'Family'} (${ft.description})`,
+          category: 'reimbursement',
+          amount: ft.amount,
+          paymentMode: 'cash',
+          paidBy: 'shop_galla',
+          familyMemberId: ft.familyMemberId,
+          billType: 'kaccha',
+          paymentStatus: 'paid',
+          createdAt: ft.date,
+        };
+        newExpenses = [exp, ...newExpenses.filter((e) => e.id !== ft.id)];
       }
-      return newState;
+
+      const newState: AppState = {
+        ...state,
+        familyTransactions: [ft, ...state.familyTransactions.filter((t) => t.id !== ft.id)],
+        expenses: newExpenses,
+      };
+      return reconcileStoreState(newState);
     }
 
     case 'ADD_RECURRING_BILL': {
@@ -331,7 +483,7 @@ function reducer(state: AppState, action: AppAction): AppState {
     case 'UPDATE_RECURRING_BILL': {
       return {
         ...state,
-        recurringBills: state.recurringBills.map(rb =>
+        recurringBills: state.recurringBills.map((rb) =>
           rb.id === action.payload.id ? action.payload : rb
         ),
       };
@@ -340,18 +492,19 @@ function reducer(state: AppState, action: AppAction): AppState {
     case 'DELETE_RECURRING_BILL': {
       return {
         ...state,
-        recurringBills: state.recurringBills.filter(rb => rb.id !== action.payload),
+        recurringBills: state.recurringBills.filter((rb) => rb.id !== action.payload),
       };
     }
 
     case 'MARK_RECURRING_PAID': {
-      const bill = state.recurringBills.find(rb => rb.id === action.payload);
+      const bill = state.recurringBills.find((rb) => rb.id === action.payload);
       if (!bill) return state;
       const now = new Date();
       const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, bill.dueDay);
-      return {
+
+      const newState: AppState = {
         ...state,
-        recurringBills: state.recurringBills.map(rb =>
+        recurringBills: state.recurringBills.map((rb) =>
           rb.id === action.payload
             ? {
                 ...rb,
@@ -362,6 +515,7 @@ function reducer(state: AppState, action: AppAction): AppState {
             : rb
         ),
       };
+      return reconcileStoreState(newState);
     }
 
     case 'TOP_UP_BALANCE': {
@@ -369,7 +523,9 @@ function reducer(state: AppState, action: AppAction): AppState {
       const topUpExpense: Expense = {
         id: generateId(),
         date: new Date().toISOString(),
-        title: description || `Cash/Sales Top-up to ${target === 'galla' ? 'Galla' : 'Bank'}`,
+        title:
+          description ||
+          `Sales / Cash Deposit to ${target === 'galla' ? 'Cash Galla' : 'Bank'}`,
         category: 'other',
         amount,
         paymentMode: 'cash',
@@ -380,26 +536,24 @@ function reducer(state: AppState, action: AppAction): AppState {
         topUpTarget: target,
         createdAt: new Date().toISOString(),
       };
-      return {
+
+      const newState: AppState = {
         ...state,
-        shopProfile: {
-          ...state.shopProfile,
-          [target === 'galla' ? 'gallaBalance' : 'bankBalance']:
-            state.shopProfile[target === 'galla' ? 'gallaBalance' : 'bankBalance'] + amount,
-        },
         expenses: [topUpExpense, ...state.expenses],
       };
+      return reconcileStoreState(newState);
     }
 
     case 'IMPORT_STATE': {
-      return { ...action.payload };
+      return reconcileStoreState({ ...action.payload });
     }
 
     case 'UPDATE_SHOP_PROFILE': {
-      return {
+      const newState: AppState = {
         ...state,
         shopProfile: { ...state.shopProfile, ...action.payload },
       };
+      return reconcileStoreState(newState);
     }
 
     default:
@@ -451,27 +605,29 @@ export function useEmployeeMonthSummary(employeeId: string, month?: string) {
   const targetMonth = month || getCurrentMonth();
 
   const advances = state.employeeAdvances.filter(
-    a => a.employeeId === employeeId && a.month === targetMonth
+    (a) => a.employeeId === employeeId && a.month === targetMonth
   );
-  const employee = state.employees.find(e => e.id === employeeId);
+  const employee = state.employees.find((e) => e.id === employeeId);
   const settlement = state.monthlySettlements.find(
-    s => s.employeeId === employeeId && s.month === targetMonth
+    (s) => s.employeeId === employeeId && s.month === targetMonth
   );
 
   const totalAdvances = advances
-    .filter(a => a.type === 'advance' || a.type === 'tea_food')
+    .filter((a) => a.type === 'advance' || a.type === 'tea_food')
     .reduce((sum, a) => sum + a.amount, 0);
   const totalBonuses = advances
-    .filter(a => a.type === 'bonus')
+    .filter((a) => a.type === 'bonus')
     .reduce((sum, a) => sum + a.amount, 0);
   const totalDeductions = advances
-    .filter(a => a.type === 'deduction')
+    .filter((a) => a.type === 'deduction')
     .reduce((sum, a) => sum + a.amount, 0);
   const baseSalary = employee?.baseSalary || 0;
-  const netPayable = baseSalary + totalBonuses - totalAdvances - totalDeductions;
+  const netPayable = Math.max(0, baseSalary + totalBonuses - totalAdvances - totalDeductions);
   const salaryPaid = advances
-    .filter(a => a.type === 'salary_payout')
+    .filter((a) => a.type === 'salary_payout')
     .reduce((sum, a) => sum + a.amount, 0);
+
+  const isSettled = settlement?.isSettled || salaryPaid > 0;
 
   return {
     employee,
@@ -480,9 +636,9 @@ export function useEmployeeMonthSummary(employeeId: string, month?: string) {
     totalBonuses,
     totalDeductions,
     baseSalary,
-    netPayable,
+    netPayable: isSettled ? 0 : netPayable,
     salaryPaid,
-    isSettled: settlement?.isSettled || false,
+    isSettled,
     settlement,
   };
 }
@@ -491,24 +647,24 @@ export function useFamilyMemberSummary(memberId: string, month?: string) {
   const { state } = useStore();
   const targetMonth = month || getCurrentMonth();
 
-  const member = state.familyMembers.find(fm => fm.id === memberId);
+  const member = state.familyMembers.find((fm) => fm.id === memberId);
   const transactions = state.familyTransactions.filter(
-    ft => ft.familyMemberId === memberId && ft.month === targetMonth
+    (ft) => ft.familyMemberId === memberId && ft.month === targetMonth
   );
 
   const totalWithdrawn = transactions
-    .filter(t => t.type === 'withdrawal')
+    .filter((t) => t.type === 'withdrawal')
     .reduce((sum, t) => sum + t.amount, 0);
   const totalPersonalForShop = transactions
-    .filter(t => t.type === 'personal_for_shop')
+    .filter((t) => t.type === 'personal_for_shop')
     .reduce((sum, t) => sum + t.amount, 0);
   const totalReimbursed = transactions
-    .filter(t => t.type === 'reimburse')
+    .filter((t) => t.type === 'reimburse')
     .reduce((sum, t) => sum + t.amount, 0);
 
   const budgetUsed = totalWithdrawn;
   const budgetRemaining = (member?.monthlyBudget || 0) - budgetUsed;
-  const shopOwes = totalPersonalForShop - totalReimbursed;
+  const shopOwes = Math.max(0, totalPersonalForShop - totalReimbursed);
 
   return {
     member,
