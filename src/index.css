@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@theme {
+  --color-alabaster: #FAF8F5;
+  --color-stone-warm: #F3EFEA;
+  --color-border-warm: #E6E2DD;
+  --color-emerald-heritage: #0F3D3E;
+  --color-emerald-deep: #1B4332;
+  --color-brass: #C59B27;
+  --color-gold: #D4AF37;
+  --color-terracotta: #C94A4A;
+  --color-sage: #2D6A4F;
+  --color-amber-warm: #D97706;
+  --color-obsidian: #121316;
+  --color-obsidian-card: #1A1B1F;
+  --color-obsidian-border: #2A2B30;
+  --color-obsidian-surface: #222328;
+
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* Base styles */
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  background-color: var(--color-alabaster);
+  color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark mode base */
+.dark body {
+  background-color: var(--color-obsidian);
+  color: #e5e5e5;
+}
+
+/* Tabular numbers for currency */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d0cb;
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3a3b40;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .print-break {
+    page-break-after: always;
+  }
+}
+
+/* Animation utilities */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.1) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
