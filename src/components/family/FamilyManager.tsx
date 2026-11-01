@@ -430,7 +430,7 @@ export default function FamilyManager() {
           <p className="text-xs font-semibold text-[#8A8780] dark:text-[#9A9892] uppercase">
             Total Monthly Drawing Pool
           </p>
-          <p className="text-2xl font-serif font-bold text-[#1a1a1a] dark:text-[#f3efe9] mt-2 tabular-nums">
+          <p className="text-2xl font-ledger-mono font-bold text-[#18191C] dark:text-[#F5F4EE] mt-2">
             {formatINR(totalFamilyBudget)}
           </p>
           <p className="text-xs text-[#8A8780] dark:text-[#9A9892] mt-1">
@@ -442,7 +442,7 @@ export default function FamilyManager() {
           <p className="text-xs font-semibold text-[#8A8780] dark:text-[#9A9892] uppercase">
             Total Drawn This Month
           </p>
-          <p className="text-2xl font-serif font-bold text-[#C94A4A] mt-2 tabular-nums">
+          <p className="text-2xl font-ledger-mono font-bold text-[#B93E3E] mt-2">
             {formatINR(totalFamilyDrawnThisMonth)}
           </p>
           <p className="text-xs text-[#8A8780] dark:text-[#9A9892] mt-1">
@@ -456,7 +456,7 @@ export default function FamilyManager() {
           <p className="text-xs font-semibold text-[#8A8780] dark:text-[#9A9892] uppercase">
             Remaining Family Buffer
           </p>
-          <p className="text-2xl font-serif font-bold text-[#2D6A4F] dark:text-emerald-400 mt-2 tabular-nums">
+          <p className="text-2xl font-ledger-mono font-bold text-[#225942] dark:text-emerald-400 mt-2">
             {formatINR(Math.max(0, totalFamilyBudget - totalFamilyDrawnThisMonth))}
           </p>
           <p className="text-xs text-[#8A8780] dark:text-[#9A9892] mt-1">
@@ -770,7 +770,7 @@ export default function FamilyManager() {
 
               <div className="bg-[#FAF8F5] dark:bg-[#222328] p-4 rounded-xl border border-[#E6E2DD] dark:border-[#2A2B30] mb-4">
                 <p className="text-xs text-[#8A8780] dark:text-[#9A9892]">Reimbursement Due</p>
-                <p className="text-2xl font-bold font-serif text-[#D97706] mt-1 tabular-nums">
+                <p className="text-2xl font-bold font-ledger-mono text-[#B27B18] mt-1">
                   {formatINR(reimburseAmount)}
                 </p>
                 <p className="text-[11px] text-[#8A8780] dark:text-[#9A9892] mt-1">

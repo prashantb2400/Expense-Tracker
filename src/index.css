@@ -1,52 +1,104 @@
 @import "tailwindcss";
 
 @theme {
-  --color-alabaster: #FAF8F5;
-  --color-stone-warm: #F3EFEA;
-  --color-border-warm: #E6E2DD;
-  --color-emerald-heritage: #0F3D3E;
-  --color-emerald-deep: #1B4332;
+  --color-canvas-light: #F7F5F0;
+  --color-canvas-dark: #141518;
+  --color-surface-light: #FFFFFF;
+  --color-surface-dark: #1C1E23;
+  --color-neutral-warm: #EFECE5;
+  --color-hairline-light: #E5E0D6;
+  --color-hairline-dark: #292C34;
+
+  --color-emerald-heritage: #164032;
+  --color-emerald-deep: #0E2B22;
   --color-brass: #C59B27;
-  --color-gold: #D4AF37;
-  --color-terracotta: #C94A4A;
-  --color-sage: #2D6A4F;
-  --color-amber-warm: #D97706;
-  --color-obsidian: #121316;
-  --color-obsidian-card: #1A1B1F;
-  --color-obsidian-border: #2A2B30;
-  --color-obsidian-surface: #222328;
+  --color-brass-gold: #D4AF37;
+  --color-terracotta-vermilion: #B93E3E;
+  --color-forest-sage: #225942;
+  --color-umber-amber: #B27B18;
+
+  --color-charcoal-ink: #18191C;
+  --color-parchment-mist: #73716A;
+  --color-parchment-white: #F5F4EE;
+
+  /* Backward compatible aliases */
+  --color-alabaster: #F7F5F0;
+  --color-stone-warm: #EFECE5;
+  --color-border-warm: #E5E0D6;
+  --color-terracotta: #B93E3E;
+  --color-sage: #225942;
+  --color-amber-warm: #B27B18;
+  --color-obsidian: #141518;
+  --color-obsidian-card: #1C1E23;
+  --color-obsidian-border: #292C34;
+  --color-obsidian-surface: #22252B;
 
   --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 /* Base styles */
 html {
   font-family: var(--font-sans);
+  background-color: var(--color-canvas-light);
+  color: var(--color-charcoal-ink);
 }
 
 body {
-  background-color: var(--color-alabaster);
-  color: #1a1a1a;
+  background-color: var(--color-canvas-light);
+  color: var(--color-charcoal-ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* Dark mode base */
 .dark body {
-  background-color: var(--color-obsidian);
-  color: #e5e5e5;
+  background-color: var(--color-canvas-dark);
+  color: var(--color-parchment-white);
 }
 
-/* Tabular numbers for currency */
+/* Strict Monospace precision for financial numerals */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.font-ledger-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.01em;
+}
+
+/* Tactile push effect on interactive buttons */
+.btn-tactile {
+  transition: transform 0.1s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.15s ease;
+}
+.btn-tactile:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+/* Subtle breathing glow for live cash drawer */
+@keyframes breathingDrawer {
+  0%, 100% {
+    opacity: 0.65;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+.animate-drawer-pulse {
+  animation: breathingDrawer 3s ease-in-out infinite;
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -54,12 +106,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d4d0cb;
-  border-radius: 3px;
+  background: #D9D4C7;
+  border-radius: 4px;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #3a3b40;
+  background: #353842;
 }
 
 /* Print styles */
@@ -76,29 +128,20 @@ body {
   }
 }
 
-/* Animation utilities */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.3s ease-out forwards;
-}
-
+/* Dimensional Skeletal Shimmer */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.1) 50%, transparent 75%);
+  background: linear-gradient(90deg, transparent 25%, rgba(22, 64, 50, 0.06) 50%, transparent 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(212, 175, 55, 0.08) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
 }

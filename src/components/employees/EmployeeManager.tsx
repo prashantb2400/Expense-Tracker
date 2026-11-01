@@ -229,7 +229,7 @@ function EmployeeCard({
           <div className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
             <AlertTriangle size={14} className="text-[#C94A4A] flex-shrink-0" />
             <span className="text-xs font-medium text-[#C94A4A]">
-              ⚠️ Over-drawn by {formatINR(Math.abs(remaining))}
+              Over-drawn by {formatINR(Math.abs(remaining))}
             </span>
           </div>
         )}
@@ -1084,7 +1084,7 @@ function SettleSalaryModal({
             <CheckCircle size={18} className="text-green-600 dark:text-green-400 flex-shrink-0" />
             <div>
               <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                ✓ Already Settled
+                Settled
               </p>
               {settlement?.settledAt && (
                 <p className="text-xs text-green-600 dark:text-green-500 mt-0.5">
@@ -1131,10 +1131,10 @@ function SettleSalaryModal({
           <div className="flex items-center justify-between">
             <span className="text-base font-semibold text-gray-700 dark:text-gray-300">Net Payable</span>
             <span
-              className={`text-2xl font-serif font-bold ${
+              className={`text-2xl font-ledger-mono font-bold ${
                 netPayable >= 0
-                  ? 'text-[#1B4332] dark:text-emerald-300'
-                  : 'text-[#C94A4A]'
+                  ? 'text-[#164032] dark:text-[#D4AF37]'
+                  : 'text-[#B93E3E]'
               }`}
             >
               {formatINR(Math.abs(netPayable))}

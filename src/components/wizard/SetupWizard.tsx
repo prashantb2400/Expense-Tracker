@@ -619,8 +619,8 @@ export default function SetupWizard() {
         >
           <CheckCircle2 className="w-8 h-8 text-[#D4AF37]" />
         </motion.div>
-        <h2 className="text-2xl font-serif text-[#0F3D3E] dark:text-emerald-300">
-          Ready to Launch!
+        <h2 className="text-2xl font-serif text-[#164032] dark:text-[#D4AF37]">
+          Ready to Open Shop!
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Review your setup before starting
@@ -728,10 +728,10 @@ export default function SetupWizard() {
         <button
           type="button"
           onClick={handleCompleteSetup}
-          className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#0F3D3E] to-[#1B4332] px-5 py-3 text-sm font-bold text-white shadow-lg hover:shadow-xl hover:from-[#1B4332] hover:to-[#2D6A4F] transition-all dark:from-emerald-700 dark:to-emerald-600 dark:hover:from-emerald-600 dark:hover:to-emerald-500"
+          className="btn-tactile flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#164032] hover:bg-[#0E2B22] px-5 py-3 text-sm font-bold text-white shadow-md transition-all dark:bg-[#D4AF37] dark:text-[#141518] dark:hover:bg-[#C59B27]"
         >
-          <Rocket className="w-4 h-4" />
-          Launch Dashboard
+          <Store className="w-4 h-4" />
+          Open Shop Dashboard
         </button>
       </div>
     </div>

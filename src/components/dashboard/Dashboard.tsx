@@ -118,9 +118,9 @@ interface CustomTooltipProps {
 function AreaTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-lg shadow-lg px-3 py-2 text-sm">
+    <div className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-lg shadow-lg px-3 py-2 text-sm">
       <p className="text-stone-500 dark:text-stone-400 text-xs mb-0.5">{label}</p>
-      <p className="font-serif font-semibold text-[#0F3D3E] dark:text-emerald-300">
+      <p className="font-mono tabular-nums font-semibold text-[#164032] dark:text-[#D4AF37]">
         {formatINR(payload[0].value)}
       </p>
     </div>
@@ -131,11 +131,11 @@ function PieTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   const data = payload[0];
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-lg shadow-lg px-3 py-2 text-sm">
+    <div className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-lg shadow-lg px-3 py-2 text-sm">
       <p className="text-stone-500 dark:text-stone-400 text-xs mb-0.5">
         {String(data.name)}
       </p>
-      <p className="font-serif font-semibold text-[#0F3D3E] dark:text-emerald-300">
+      <p className="font-mono tabular-nums font-semibold text-[#164032] dark:text-[#D4AF37]">
         {formatINR(data.value)}
       </p>
     </div>
@@ -145,9 +145,9 @@ function PieTooltip({ active, payload }: CustomTooltipProps) {
 function BarTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-lg shadow-lg px-3 py-2 text-sm">
+    <div className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-lg shadow-lg px-3 py-2 text-sm">
       <p className="text-stone-500 dark:text-stone-400 text-xs mb-0.5">{label}</p>
-      <p className="font-serif font-semibold text-[#0F3D3E] dark:text-emerald-300">
+      <p className="font-mono tabular-nums font-semibold text-[#164032] dark:text-[#D4AF37]">
         {formatINR(payload[0].value)}
       </p>
     </div>
@@ -221,7 +221,7 @@ function TopUpModal({ target, onClose }: TopUpModalProps) {
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0"
                 autoFocus
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-[#FAF8F5] dark:bg-[#111] text-stone-800 dark:text-stone-200 font-serif text-lg focus:outline-none focus:ring-2 focus:ring-[#C59B27]/40 transition-shadow"
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#E5E0D6] dark:border-[#292C34] bg-[#FAF8F5] dark:bg-[#141518] text-stone-800 dark:text-stone-200 font-ledger-mono font-bold text-lg focus:outline-none focus:ring-2 focus:ring-[#164032]/40 dark:focus:ring-[#D4AF37]/40 transition-shadow"
               />
             </div>
           </div>
@@ -235,14 +235,14 @@ function TopUpModal({ target, onClose }: TopUpModalProps) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g. Cash from sales counter"
-              className="w-full px-4 py-2.5 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-[#FAF8F5] dark:bg-[#111] text-stone-800 dark:text-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#C59B27]/40 transition-shadow"
+              className="w-full px-4 py-2.5 rounded-xl border border-[#E5E0D6] dark:border-[#292C34] bg-[#FAF8F5] dark:bg-[#141518] text-stone-800 dark:text-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#164032]/40 dark:focus:ring-[#D4AF37]/40 transition-shadow"
             />
           </div>
 
           <button
             onClick={handleConfirm}
             disabled={!amount || parseFloat(amount) <= 0}
-            className="w-full py-2.5 rounded-xl bg-[#0F3D3E] hover:bg-[#1B4332] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium text-sm transition-colors"
+            className="btn-tactile w-full py-2.5 rounded-xl bg-[#164032] hover:bg-[#0E2B22] dark:bg-[#D4AF37] dark:text-[#141518] dark:hover:bg-[#C59B27] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
           >
             Confirm Top-Up
           </button>
@@ -418,10 +418,10 @@ function QuickExpenseModal({ onClose }: QuickExpenseModalProps) {
                 );
               })}
             </div>
-            <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-1.5">
+            <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-1.5 font-medium">
               {paymentMode === 'cash'
-                ? `⚡ Deducts from Cash Galla (Current: ${formatINR(state.shopProfile.gallaBalance)})`
-                : `⚡ Deducts from Bank Balance (Current: ${formatINR(state.shopProfile.bankBalance)})`}
+                ? `Directly deducts from Cash Galla (Available: ${formatINR(state.shopProfile.gallaBalance)})`
+                : `Directly deducts from Bank Balance (Available: ${formatINR(state.shopProfile.bankBalance)})`}
             </p>
           </div>
 
@@ -759,17 +759,17 @@ export default function Dashboard() {
       {/* ================================================================ */}
       {/* SECTION 0: Top Command Header with Quick Actions                 */}
       {/* ================================================================ */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E6E2DD] dark:border-[#2a2a2a]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E0D6] dark:border-[#292C34]">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#1a1a1a] dark:text-[#f3efe9]">
+            <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#18191C] dark:text-[#F5F4EE]">
               {state.shopProfile.shopName || 'Bahi-Khata'}
             </h1>
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#0F3D3E]/10 dark:bg-[#D4AF37]/20 text-[#0F3D3E] dark:text-[#D4AF37] border border-[#0F3D3E]/20 dark:border-[#D4AF37]/30">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#164032]/10 dark:bg-[#D4AF37]/20 text-[#164032] dark:text-[#D4AF37] border border-[#164032]/20 dark:border-[#D4AF37]/30">
               <Store size={12} /> Executive Command Center
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-[#8A8780] dark:text-[#9A9892] mt-1 flex items-center gap-2 flex-wrap">
+          <p className="text-xs sm:text-sm text-[#73716A] dark:text-[#949188] mt-1 flex items-center gap-2.5 flex-wrap">
             <span>
               {new Date().toLocaleDateString('en-IN', {
                 weekday: 'long',
@@ -779,16 +779,17 @@ export default function Dashboard() {
               })}
             </span>
             <span>•</span>
-            <span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#164032] dark:bg-[#D4AF37] animate-drawer-pulse" />
               Cash Drawer (Galla):{' '}
-              <strong className="text-[#1a1a1a] dark:text-[#f3efe9] tabular-nums">
+              <strong className="text-[#18191C] dark:text-[#F5F4EE] font-ledger-mono font-bold">
                 {formatINR(gallaBalance)}
               </strong>
             </span>
             <span>•</span>
             <span>
               Bank/UPI:{' '}
-              <strong className="text-[#1a1a1a] dark:text-[#f3efe9] tabular-nums">
+              <strong className="text-[#18191C] dark:text-[#F5F4EE] font-ledger-mono font-bold">
                 {formatINR(bankBalance)}
               </strong>
             </span>
@@ -799,26 +800,26 @@ export default function Dashboard() {
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
             onClick={() => setIsAddExpenseOpen(true)}
-            className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-[#0F3D3E] dark:bg-[#1B4332] text-white hover:bg-[#0A2A2B] dark:hover:bg-[#143226] font-semibold text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98]"
+            className="btn-tactile inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-[#164032] dark:bg-[#D4AF37] text-white dark:text-[#141518] hover:bg-[#0E2B22] dark:hover:bg-[#C59B27] font-semibold text-sm shadow-sm transition-all"
           >
             <Plus size={16} className="stroke-[2.5]" />
             <span>Add New Expense</span>
-            <kbd className="hidden sm:inline-block ml-1 px-1.5 py-0.5 text-[10px] uppercase font-mono rounded bg-white/20 text-white/90">
+            <kbd className="hidden sm:inline-block ml-1 px-1.5 py-0.5 text-[10px] uppercase font-mono rounded bg-white/20 dark:bg-black/20 text-white/90 dark:text-black/80">
               N
             </kbd>
           </button>
           <button
             onClick={() => setTopUpTarget('galla')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] text-xs font-semibold text-[#1a1a1a] dark:text-[#f3efe9] hover:bg-[#FAF8F5] dark:hover:bg-[#222] transition-colors shadow-xs"
+            className="btn-tactile inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E5E0D6] dark:border-[#292C34] bg-white dark:bg-[#1C1E23] text-xs font-semibold text-[#18191C] dark:text-[#F5F4EE] hover:bg-[#EFECE5] dark:hover:bg-[#22252B] transition-colors shadow-xs"
           >
-            <Banknote size={14} className="text-[#0F3D3E] dark:text-[#D4AF37]" />
+            <Banknote size={14} className="text-[#164032] dark:text-[#D4AF37]" />
             <span>+ Cash in Galla</span>
           </button>
           <button
             onClick={() => setTopUpTarget('bank')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E6E2DD] dark:border-[#2a2a2a] bg-white dark:bg-[#1a1a1a] text-xs font-semibold text-[#1a1a1a] dark:text-[#f3efe9] hover:bg-[#FAF8F5] dark:hover:bg-[#222] transition-colors shadow-xs"
+            className="btn-tactile inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-[#E5E0D6] dark:border-[#292C34] bg-white dark:bg-[#1C1E23] text-xs font-semibold text-[#18191C] dark:text-[#F5F4EE] hover:bg-[#EFECE5] dark:hover:bg-[#22252B] transition-colors shadow-xs"
           >
-            <Building2 size={14} className="text-[#2563EB]" />
+            <Building2 size={14} className="text-[#2563EB] dark:text-[#60A5FA]" />
             <span>+ Add to Bank</span>
           </button>
         </div>
@@ -835,85 +836,85 @@ export default function Dashboard() {
         {/* ---- Card 1: Total Monthly Outflow ---- */}
         <motion.div
           variants={cardVariants}
-          className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+          className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-2xl p-5 shadow-xs hover:border-[#164032]/30 dark:hover:border-[#D4AF37]/30 transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
               Monthly Outflow
             </span>
-            <div className="p-1.5 rounded-lg bg-[#FAF8F5] dark:bg-[#111]">
-              <TrendingUp className="w-4 h-4 text-[#0F3D3E] dark:text-emerald-400" />
+            <div className="p-1.5 rounded-lg bg-[#FAF8F5] dark:bg-[#141518]">
+              <TrendingUp className="w-4 h-4 text-[#164032] dark:text-[#D4AF37]" />
             </div>
           </div>
-          <p className="font-serif text-2xl font-bold text-stone-900 dark:text-stone-100 mb-1">
+          <p className="font-ledger-mono text-2xl sm:text-3xl font-bold text-[#18191C] dark:text-[#F5F4EE] mb-1">
             {formatINR(thisMonthTotal)}
           </p>
           <div className="flex items-center gap-1 text-xs">
             {monthPctChange <= 0 ? (
               <>
-                <ArrowDownRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                <ArrowDownRight className="w-3.5 h-3.5 text-[#225942] dark:text-emerald-400" />
+                <span className="text-[#225942] dark:text-emerald-400 font-semibold font-mono tabular-nums">
                   {Math.abs(monthPctChange)}% less
                 </span>
               </>
             ) : (
               <>
-                <ArrowUpRight className="w-3.5 h-3.5 text-[#C94A4A]" />
-                <span className="text-[#C94A4A] font-medium">
+                <ArrowUpRight className="w-3.5 h-3.5 text-[#B93E3E]" />
+                <span className="text-[#B93E3E] font-semibold font-mono tabular-nums">
                   {monthPctChange}% more
                 </span>
               </>
             )}
-            <span className="text-stone-400 dark:text-stone-500 ml-0.5">vs last month</span>
+            <span className="text-stone-500 dark:text-stone-400 ml-0.5">vs last month</span>
           </div>
         </motion.div>
 
         {/* ---- Card 2: Cash vs Digital Split ---- */}
         <motion.div
           variants={cardVariants}
-          className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+          className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-2xl p-5 shadow-xs hover:border-[#164032]/30 dark:hover:border-[#D4AF37]/30 transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
               Cash vs Digital
             </span>
-            <div className="p-1.5 rounded-lg bg-[#FAF8F5] dark:bg-[#111]">
-              <Wallet className="w-4 h-4 text-[#C59B27] dark:text-amber-400" />
+            <div className="p-1.5 rounded-lg bg-[#FAF8F5] dark:bg-[#141518]">
+              <Wallet className="w-4 h-4 text-[#B27B18] dark:text-[#D4AF37]" />
             </div>
           </div>
           <div className="space-y-3">
             {/* Galla */}
             <div>
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
-                  <Banknote className="w-3.5 h-3.5" />
+                <span className="flex items-center gap-1.5 text-stone-600 dark:text-stone-300">
+                  <Banknote className="w-3.5 h-3.5 text-[#164032] dark:text-[#D4AF37]" />
                   Galla
                 </span>
-                <span className="font-serif font-semibold text-stone-800 dark:text-stone-200">
+                <span className="font-mono tabular-nums font-semibold text-stone-800 dark:text-stone-200">
                   {formatINR(gallaBalance)}
                 </span>
               </div>
-              <div className="h-2 w-full bg-[#F3EFEA] dark:bg-[#222] rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-[#EFECE5] dark:bg-[#141518] rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${gallaPct}%` }}
                   transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                  className="h-full rounded-full bg-[#1B4332]"
+                  className="h-full rounded-full bg-[#164032] dark:bg-[#D4AF37]"
                 />
               </div>
             </div>
             {/* Bank */}
             <div>
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="flex items-center gap-1.5 text-stone-500 dark:text-stone-400">
-                  <Smartphone className="w-3.5 h-3.5" />
+                <span className="flex items-center gap-1.5 text-stone-600 dark:text-stone-300">
+                  <Smartphone className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#60A5FA]" />
                   Digital / Bank
                 </span>
-                <span className="font-serif font-semibold text-stone-800 dark:text-stone-200">
+                <span className="font-mono tabular-nums font-semibold text-stone-800 dark:text-stone-200">
                   {formatINR(bankBalance)}
                 </span>
               </div>
-              <div className="h-2 w-full bg-[#F3EFEA] dark:bg-[#222] rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-[#EFECE5] dark:bg-[#141518] rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${bankPct}%` }}
@@ -928,31 +929,31 @@ export default function Dashboard() {
         {/* ---- Card 3: Staff Payroll Liability ---- */}
         <motion.div
           variants={cardVariants}
-          className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+          className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-2xl p-5 shadow-xs hover:border-[#164032]/30 dark:hover:border-[#D4AF37]/30 transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
               Payroll Liability
             </span>
-            <div className="p-1.5 rounded-lg bg-[#FAF8F5] dark:bg-[#111]">
-              <Users className="w-4 h-4 text-[#2D6A4F] dark:text-emerald-400" />
+            <div className="p-1.5 rounded-lg bg-[#FAF8F5] dark:bg-[#141518]">
+              <Users className="w-4 h-4 text-[#225942] dark:text-emerald-400" />
             </div>
           </div>
-          <p className="font-serif text-2xl font-bold text-stone-900 dark:text-stone-100 mb-1">
+          <p className="font-ledger-mono text-2xl sm:text-3xl font-bold text-[#18191C] dark:text-[#F5F4EE] mb-1">
             {formatINR(remainingPayable)}
           </p>
-          <div className="flex items-center justify-between text-xs text-stone-400 dark:text-stone-500">
+          <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400 font-mono tabular-nums">
             <span>
               Base: {formatINR(totalBaseSalaries)}
             </span>
-            <span className="text-[#D97706] dark:text-amber-400 font-medium">
+            <span className="text-[#B27B18] dark:text-amber-400 font-medium">
               Adv: {formatINR(totalAdvancesThisMonth)}
             </span>
           </div>
-          <div className="mt-2 flex items-center justify-between text-[11px] text-stone-400 dark:text-stone-500">
+          <div className="mt-2 flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400">
             <span>{activeEmployees.length} active staff</span>
             {totalSettledSalaryThisMonth > 0 && (
-              <span className="text-[#2D6A4F] dark:text-emerald-400 font-medium">
+              <span className="text-[#225942] dark:text-emerald-400 font-semibold font-mono tabular-nums">
                 Paid: {formatINR(totalSettledSalaryThisMonth)}
               </span>
             )}
@@ -962,20 +963,20 @@ export default function Dashboard() {
         {/* ---- Card 4: Pending Vendor Dues ---- */}
         <motion.div
           variants={cardVariants}
-          className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+          className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-2xl p-5 shadow-xs hover:border-[#B93E3E]/30 transition-all"
         >
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
               Pending Dues
             </span>
-            <div className="p-1.5 rounded-lg bg-[#C94A4A]/10">
-              <AlertTriangle className="w-4 h-4 text-[#C94A4A]" />
+            <div className="p-1.5 rounded-lg bg-[#B93E3E]/10">
+              <AlertTriangle className="w-4 h-4 text-[#B93E3E]" />
             </div>
           </div>
-          <p className="font-serif text-2xl font-bold text-stone-900 dark:text-stone-100 mb-1">
+          <p className="font-ledger-mono text-2xl sm:text-3xl font-bold text-[#18191C] dark:text-[#F5F4EE] mb-1">
             {formatINR(pendingSum)}
           </p>
-          <div className="text-xs text-stone-400 dark:text-stone-500">
+          <div className="text-xs text-stone-500 dark:text-stone-400">
             {pendingCount} unpaid {pendingCount === 1 ? 'entry' : 'entries'}
           </div>
         </motion.div>
@@ -993,18 +994,18 @@ export default function Dashboard() {
         {/* ---- Chart 1: Expense Trend (Area) ---- */}
         <motion.div
           variants={cardVariants}
-          className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-2xl p-5 shadow-sm"
+          className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-2xl p-5 shadow-xs"
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-serif text-sm font-semibold text-stone-800 dark:text-stone-200">
               Expense Trend
             </h3>
-            <div className="flex gap-1 bg-[#F3EFEA] dark:bg-[#222] rounded-lg p-0.5">
+            <div className="flex gap-1 bg-[#EFECE5] dark:bg-[#141518] rounded-lg p-0.5">
               <button
                 onClick={() => setTrendRange('7d')}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   trendRange === '7d'
-                    ? 'bg-white dark:bg-[#333] text-[#0F3D3E] dark:text-emerald-300 shadow-sm'
+                    ? 'bg-white dark:bg-[#22252B] text-[#164032] dark:text-[#D4AF37] shadow-xs'
                     : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'
                 }`}
               >
@@ -1014,7 +1015,7 @@ export default function Dashboard() {
                 onClick={() => setTrendRange('30d')}
                 className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                   trendRange === '30d'
-                    ? 'bg-white dark:bg-[#333] text-[#0F3D3E] dark:text-emerald-300 shadow-sm'
+                    ? 'bg-white dark:bg-[#22252B] text-[#164032] dark:text-[#D4AF37] shadow-xs'
                     : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'
                 }`}
               >
@@ -1027,11 +1028,11 @@ export default function Dashboard() {
               <AreaChart data={expenseTrendData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
                 <defs>
                   <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0F3D3E" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#0F3D3E" stopOpacity={0.02} />
+                    <stop offset="0%" stopColor="#164032" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#164032" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E6E2DD" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E0D6" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 10, fill: '#9CA3AF' }}
@@ -1051,11 +1052,11 @@ export default function Dashboard() {
                 <Area
                   type="monotone"
                   dataKey="total"
-                  stroke="#1B4332"
+                  stroke="#164032"
                   strokeWidth={2}
                   fill="url(#areaGradient)"
                   dot={false}
-                  activeDot={{ r: 4, fill: '#0F3D3E', stroke: '#fff', strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: '#164032', stroke: '#fff', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -1065,7 +1066,7 @@ export default function Dashboard() {
         {/* ---- Chart 2: Category Breakdown Donut ---- */}
         <motion.div
           variants={cardVariants}
-          className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-2xl p-5 shadow-sm"
+          className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-2xl p-5 shadow-xs"
         >
           <h3 className="font-serif text-sm font-semibold text-stone-800 dark:text-stone-200 mb-4">
             Category Breakdown
@@ -1204,10 +1205,10 @@ export default function Dashboard() {
               </svg>
               {/* Center text */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-serif text-3xl font-bold text-stone-900 dark:text-stone-100">
+                <span className="font-ledger-mono text-3xl font-bold text-[#18191C] dark:text-[#F5F4EE]">
                   {staffRatioPct}%
                 </span>
-                <span className="text-[10px] text-stone-400 dark:text-stone-500 uppercase tracking-wider">
+                <span className="text-[10px] text-stone-500 dark:text-stone-400 uppercase tracking-wider">
                   of total
                 </span>
               </div>
@@ -1215,14 +1216,14 @@ export default function Dashboard() {
             {/* Breakdown labels */}
             <div className="mt-4 w-full grid grid-cols-2 gap-3 text-center">
               <div>
-                <p className="text-xs text-stone-400 dark:text-stone-500 mb-0.5">Staff Costs</p>
-                <p className="font-serif text-sm font-semibold text-[#2D6A4F] dark:text-emerald-400">
+                <p className="text-xs text-stone-500 dark:text-stone-400 mb-0.5">Staff Costs</p>
+                <p className="font-mono tabular-nums text-sm font-semibold text-[#225942] dark:text-emerald-400">
                   {formatINR(staffExpenseTotal)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-stone-400 dark:text-stone-500 mb-0.5">Total Expenses</p>
-                <p className="font-serif text-sm font-semibold text-stone-700 dark:text-stone-300">
+                <p className="text-xs text-stone-500 dark:text-stone-400 mb-0.5">Total Expenses</p>
+                <p className="font-mono tabular-nums text-sm font-semibold text-stone-800 dark:text-stone-200">
                   {formatINR(thisMonthTotal)}
                 </p>
               </div>
@@ -1243,7 +1244,7 @@ export default function Dashboard() {
         {/* ---- Recent Transactions ---- */}
         <motion.div
           variants={cardVariants}
-          className="lg:col-span-2 bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-2xl p-5 shadow-sm"
+          className="lg:col-span-2 bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-2xl p-5 shadow-xs"
         >
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-3">
@@ -1252,14 +1253,14 @@ export default function Dashboard() {
               </h3>
               <button
                 onClick={() => setIsAddExpenseOpen(true)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#0F3D3E]/10 dark:bg-[#D4AF37]/20 text-[#0F3D3E] dark:text-[#D4AF37] text-xs font-semibold hover:bg-[#0F3D3E]/20 transition-colors"
+                className="btn-tactile inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#164032]/10 dark:bg-[#D4AF37]/20 text-[#164032] dark:text-[#D4AF37] text-xs font-semibold hover:bg-[#164032]/20 transition-colors"
               >
                 <Plus size={13} className="stroke-[2.5]" />
                 <span>Add Expense</span>
               </button>
             </div>
             {/* Filter pills */}
-            <div className="flex gap-1 bg-[#F3EFEA] dark:bg-[#222] rounded-lg p-0.5">
+            <div className="flex gap-1 bg-[#EFECE5] dark:bg-[#141518] rounded-lg p-0.5">
               {([
                 { key: 'all', label: 'All' },
                 { key: 'today', label: 'Today' },
@@ -1270,7 +1271,7 @@ export default function Dashboard() {
                   onClick={() => setActivityFilter(f.key)}
                   className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
                     activityFilter === f.key
-                      ? 'bg-white dark:bg-[#333] text-[#0F3D3E] dark:text-emerald-300 shadow-sm'
+                      ? 'bg-white dark:bg-[#22252B] text-[#164032] dark:text-[#D4AF37] shadow-xs'
                       : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'
                   }`}
                 >
@@ -1287,7 +1288,7 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-1">
               {/* Table header */}
-              <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-stone-400 dark:text-stone-500 border-b border-[#E6E2DD] dark:border-[#2a2a2a]">
+              <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400 border-b border-[#E5E0D6] dark:border-[#292C34]">
                 <div className="col-span-2">Date</div>
                 <div className="col-span-4">Title</div>
                 <div className="col-span-2 text-right">Amount</div>
@@ -1301,7 +1302,7 @@ export default function Dashboard() {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.03 }}
-                  className="grid grid-cols-12 gap-2 items-center px-3 py-2.5 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#111] transition-colors group"
+                  className="grid grid-cols-12 gap-2 items-center px-3 py-2.5 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#141518] transition-colors group"
                 >
                   {/* Date */}
                   <div className="col-span-2 text-xs text-stone-500 dark:text-stone-400">
@@ -1312,7 +1313,7 @@ export default function Dashboard() {
                     {tx.title}
                   </div>
                   {/* Amount */}
-                  <div className="col-span-2 text-right text-sm font-serif font-semibold text-stone-900 dark:text-stone-100">
+                  <div className="col-span-2 text-right text-sm font-mono tabular-nums font-semibold text-stone-900 dark:text-stone-100">
                     {formatINR(tx.amount)}
                   </div>
                   {/* Category badge */}
@@ -1353,10 +1354,10 @@ export default function Dashboard() {
         {/* ---- Upcoming Dues & Reminders ---- */}
         <motion.div
           variants={cardVariants}
-          className="bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] rounded-2xl p-5 shadow-sm"
+          className="bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] rounded-2xl p-5 shadow-xs"
         >
           <div className="flex items-center gap-2 mb-4">
-            <CalendarClock className="w-4 h-4 text-[#D97706] dark:text-amber-400" />
+            <CalendarClock className="w-4 h-4 text-[#B27B18] dark:text-[#D4AF37]" />
             <h3 className="font-serif text-sm font-semibold text-stone-800 dark:text-stone-200">
               Upcoming Dues
             </h3>
@@ -1376,21 +1377,21 @@ export default function Dashboard() {
                 return (
                   <div
                     key={bill.id}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#111] border border-[#E6E2DD]/50 dark:border-[#2a2a2a]"
+                    className="flex items-start gap-3 p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#141518] border border-[#E5E0D6]/60 dark:border-[#292C34]"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-stone-800 dark:text-stone-200 truncate">
                         {bill.title}
                       </p>
-                      <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+                      <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 font-mono tabular-nums">
                         {formatINR(bill.amount)} · {bill.frequency}
                       </p>
                     </div>
                     <span
                       className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                         isOverdue
-                          ? 'bg-[#C94A4A]/10 text-[#C94A4A]'
-                          : 'bg-[#D97706]/10 text-[#D97706] dark:text-amber-400'
+                          ? 'bg-[#B93E3E]/10 text-[#B93E3E]'
+                          : 'bg-[#B27B18]/10 text-[#B27B18] dark:text-amber-400'
                       }`}
                     >
                       {isOverdue
@@ -1419,28 +1420,28 @@ export default function Dashboard() {
         <motion.button
           variants={cardVariants}
           onClick={() => setIsAddExpenseOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0F3D3E] dark:bg-[#1B4332] hover:bg-[#0A2A2B] dark:hover:bg-[#143226] text-white text-sm font-semibold transition-all shadow-md active:scale-[0.98]"
+          className="btn-tactile inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#164032] dark:bg-[#D4AF37] hover:bg-[#0E2B22] dark:hover:bg-[#C59B27] text-white dark:text-[#141518] text-sm font-semibold transition-all shadow-sm"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           Record New Expense
-          <kbd className="ml-1 px-1.5 py-0.5 text-[10px] uppercase font-mono rounded bg-white/20 text-white/90">
+          <kbd className="ml-1 px-1.5 py-0.5 text-[10px] uppercase font-mono rounded bg-white/20 dark:bg-black/20 text-white/90 dark:text-black/80">
             N
           </kbd>
         </motion.button>
         <motion.button
           variants={cardVariants}
           onClick={() => setTopUpTarget('galla')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] text-stone-700 dark:text-stone-300 text-sm font-medium hover:bg-[#F3EFEA] dark:hover:bg-[#222] transition-colors shadow-sm"
+          className="btn-tactile inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] text-stone-700 dark:text-stone-300 text-sm font-semibold hover:bg-[#EFECE5] dark:hover:bg-[#22252B] transition-colors shadow-xs"
         >
-          <Banknote className="w-4 h-4 text-[#0F3D3E] dark:text-[#D4AF37]" />
+          <Banknote className="w-4 h-4 text-[#164032] dark:text-[#D4AF37]" />
           Add Cash to Galla
         </motion.button>
         <motion.button
           variants={cardVariants}
           onClick={() => setTopUpTarget('bank')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1a1a1a] border border-[#E6E2DD] dark:border-[#2a2a2a] text-stone-700 dark:text-stone-300 text-sm font-medium hover:bg-[#F3EFEA] dark:hover:bg-[#222] transition-colors shadow-sm"
+          className="btn-tactile inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1C1E23] border border-[#E5E0D6] dark:border-[#292C34] text-stone-700 dark:text-stone-300 text-sm font-semibold hover:bg-[#EFECE5] dark:hover:bg-[#22252B] transition-colors shadow-xs"
         >
-          <Building2 className="w-4 h-4 text-[#2563EB]" />
+          <Building2 className="w-4 h-4 text-[#2563EB] dark:text-[#60A5FA]" />
           Add to Bank
         </motion.button>
       </motion.div>

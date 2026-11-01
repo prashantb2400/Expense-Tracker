@@ -173,7 +173,7 @@ export default function ReportsBackup() {
   const handleResetData = () => {
     if (
       window.confirm(
-        '⚠️ CRITICAL WARNING: This will permanently wipe all shop transactions, staff records, and family balances. Make sure you have exported a JSON backup first.\n\nAre you sure you want to proceed?'
+        'CRITICAL WARNING: This will permanently wipe all shop transactions, staff records, and family balances. Make sure you have exported a JSON backup first.\n\nAre you sure you want to proceed?'
       )
     ) {
       dispatch({ type: 'RESET_APP' });
